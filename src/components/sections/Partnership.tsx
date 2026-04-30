@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { BadgeCheck } from "lucide-react";
+import fiorilliLogo from "@/assets/logo-fiorilli.png";
 
 export const Partnership = () => {
   return (
@@ -30,11 +31,14 @@ export const Partnership = () => {
             </div>
           </div>
 
-          {/* Logo placeholder */}
-          <div className="shrink-0 w-64 h-32 rounded-xl border-2 border-dashed border-border bg-background flex items-center justify-center">
-            <span className="text-muted-foreground text-sm font-medium tracking-wide">
-              [ Logo Fiorilli ]
-            </span>
+          {/* Fiorilli partner logo */}
+          <div className="shrink-0 w-72 h-32 rounded-xl border border-border bg-background flex items-center justify-center px-6">
+            <img
+              src={fiorilliLogo}
+              alt="Fiorilli Software — Parceiro Oficial"
+              className="max-h-16 w-auto object-contain"
+              loading="lazy"
+            />
           </div>
         </motion.div>
       </div>
