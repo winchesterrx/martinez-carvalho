@@ -27,8 +27,9 @@ export const Hero = () => {
         alt="Escritório moderno e iluminado com notebook profissional"
         className="absolute inset-0 w-full h-full object-cover"
       />
-      {/* Very subtle smoke overlay — keeps the photo bright and airy */}
-      <div className="absolute inset-0 bg-gradient-to-b from-slate-900/45 via-slate-900/30 to-slate-900/60" />
+      {/* Smoke overlay — strong enough to make white text pop */}
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/65 to-slate-950/85" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(220_40%_5%/0.35),hsl(220_40%_5%/0.7))]" />
 
       <div className="relative z-10 container mx-auto px-4 text-center text-white">
         <motion.div
