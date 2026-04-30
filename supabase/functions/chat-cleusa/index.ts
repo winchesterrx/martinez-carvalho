@@ -1,4 +1,8 @@
-import { corsHeaders } from "@supabase/supabase-js/cors";
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
 
 const SYSTEM_PROMPT = `Você é a Cleusa, assistente virtual oficial da Martinez & Carvalho Software LTDA, empresa especializada em implantação e suporte dos sistemas Fiorilli Software para gestão pública municipal (SCPI – Contabilidade, SIP – Folha de Pagamento, SIS – Saúde, SIA – Arrecadação, SIE – Educação, e-SUS, Portal da Transparência etc.).
 
