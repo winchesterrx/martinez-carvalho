@@ -1,52 +1,7 @@
 import { motion } from "framer-motion";
-import {
-  Calculator,
-  Wallet,
-  HeartPulse,
-  Receipt,
-  GraduationCap,
-  Eye,
-  ArrowUpRight,
-} from "lucide-react";
-
-const systems = [
-  {
-    icon: Calculator,
-    name: "SCPI",
-    title: "Contabilidade Pública",
-    description: "Gestão contábil completa em conformidade com TCE e SICONFI.",
-  },
-  {
-    icon: Wallet,
-    name: "SIP",
-    title: "Folha de Pagamento",
-    description: "Gestão de pessoal, RH e folha com integrações eSocial.",
-  },
-  {
-    icon: HeartPulse,
-    name: "SIS",
-    title: "Saúde / e-SUS",
-    description: "Gestão de unidades de saúde integrada ao DATASUS e e-SUS APS.",
-  },
-  {
-    icon: Receipt,
-    name: "Arrecadação",
-    title: "Tributos Municipais",
-    description: "IPTU, ISS, dívida ativa e atendimento ao contribuinte.",
-  },
-  {
-    icon: GraduationCap,
-    name: "Educação",
-    title: "Gestão Escolar",
-    description: "Matrículas, frequência, notas e merenda escolar centralizados.",
-  },
-  {
-    icon: Eye,
-    name: "Transparência",
-    title: "Portal da Transparência",
-    description: "Publicação automática de receitas, despesas e contratos.",
-  },
-];
+import { ArrowUpRight } from "lucide-react";
+import { Link } from "react-router-dom";
+import { systems } from "@/data/systems";
 
 export const Software = () => {
   return (
@@ -80,23 +35,26 @@ export const Software = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.08 }}
-              className="group relative bg-card border border-border rounded-2xl p-8 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)] hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden"
             >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/15 transition-colors" />
-              <div className="relative">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-primary-deep text-primary-foreground shadow-[var(--shadow-glow)] mb-5">
-                  <s.icon size={26} />
+              <Link
+                to={`/sistemas/${s.slug}`}
+                className="group relative block h-full bg-card border border-border rounded-2xl p-8 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)] hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/15 transition-colors" />
+                <div className="relative">
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-primary-deep text-primary-foreground shadow-[var(--shadow-glow)] mb-5">
+                    <s.icon size={26} />
+                  </div>
+                  <div className="flex items-baseline gap-2 mb-2">
+                    <h3 className="text-2xl font-bold text-foreground">{s.name}</h3>
+                    <span className="text-sm text-muted-foreground">{s.title}</span>
+                  </div>
+                  <p className="text-muted-foreground leading-relaxed">{s.description}</p>
+                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                    Saiba mais <ArrowUpRight size={16} />
+                  </span>
                 </div>
-                <div className="flex items-baseline gap-2 mb-2">
-                  <h3 className="text-2xl font-bold text-foreground">{s.name}</h3>
-                  <span className="text-sm text-muted-foreground">{s.title}</span>
-                </div>
-                <p className="text-muted-foreground leading-relaxed">{s.description}</p>
-                <ArrowUpRight
-                  className="absolute top-0 right-0 text-primary opacity-0 group-hover:opacity-100 -translate-y-2 group-hover:translate-y-0 transition-all"
-                  size={22}
-                />
-              </div>
+              </Link>
             </motion.div>
           ))}
         </div>
