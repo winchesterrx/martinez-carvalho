@@ -6,7 +6,7 @@ import { Partnership } from "@/components/sections/Partnership";
 import { Divider } from "@/components/sections/Divider";
 import { Support } from "@/components/sections/Support";
 import { Footer } from "@/components/sections/Footer";
-import { WhatsAppButton } from "@/components/sections/WhatsAppButton";
+import { SupportChat } from "@/components/sections/SupportChat";
 
 const Index = () => {
   return (
@@ -21,7 +21,7 @@ const Index = () => {
         <Support />
       </main>
       <Footer />
-      <WhatsAppButton />
+      <SupportChat />
     </div>
   );
 };
