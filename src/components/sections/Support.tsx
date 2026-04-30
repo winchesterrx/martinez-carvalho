@@ -1,28 +1,74 @@
 import { motion } from "framer-motion";
-import { Download, Play, Monitor, Headphones } from "lucide-react";
+import { Download, Play, Wrench, Headphones, FileText, MonitorSmartphone, FileCheck2 } from "lucide-react";
 
-const downloads = [
+const tools = [
   {
+    icon: MonitorSmartphone,
     name: "AnyDesk",
     description: "Acesso remoto rápido e seguro para suporte imediato.",
     href: "https://anydesk.com/pt/downloads/windows",
     color: "from-red-500 to-red-600",
   },
   {
+    icon: MonitorSmartphone,
     name: "TeamViewer",
     description: "Conexão remota completa com o nosso time técnico.",
     href: "https://www.teamviewer.com/pt-br/baixar/windows/",
     color: "from-blue-500 to-blue-600",
   },
+  {
+    icon: FileCheck2,
+    name: "Requisitos do Sistema",
+    description: "PDF com requisitos mínimos para os sistemas Fiorilli.",
+    href: "#",
+    color: "from-emerald-500 to-emerald-600",
+  },
+  {
+    icon: FileText,
+    name: "Manual do Usuário",
+    description: "Documentação completa para uso diário das soluções.",
+    href: "#",
+    color: "from-primary to-primary-deep",
+  },
 ];
 
 const tutorials = [
-  { title: "Introdução ao SCPI", duration: "12:35", topic: "Contabilidade" },
-  { title: "Folha mensal no SIP", duration: "18:20", topic: "Folha de Pagamento" },
-  { title: "Atendimento e-SUS no SIS", duration: "15:10", topic: "Saúde" },
-  { title: "Lançamento de IPTU", duration: "09:48", topic: "Arrecadação" },
-  { title: "Matrícula escolar online", duration: "11:22", topic: "Educação" },
-  { title: "Publicação Transparência", duration: "07:55", topic: "Transparência" },
+  {
+    title: "Introdução ao SCPI",
+    duration: "12:35",
+    topic: "Contabilidade",
+    description: "Primeiros passos no sistema de contabilidade pública.",
+  },
+  {
+    title: "Folha mensal no SIP",
+    duration: "18:20",
+    topic: "Folha de Pagamento",
+    description: "Processamento completo da folha mensal e encargos.",
+  },
+  {
+    title: "Atendimento e-SUS no SIS",
+    duration: "15:10",
+    topic: "Saúde",
+    description: "Registro de atendimentos e envio ao DATASUS.",
+  },
+  {
+    title: "Lançamento de IPTU",
+    duration: "09:48",
+    topic: "Arrecadação",
+    description: "Geração e lançamento dos carnês de IPTU anuais.",
+  },
+  {
+    title: "Matrícula escolar online",
+    duration: "11:22",
+    topic: "Educação",
+    description: "Cadastro de alunos e gestão de matrículas pela web.",
+  },
+  {
+    title: "Publicação Transparência",
+    duration: "07:55",
+    topic: "Transparência",
+    description: "Publicação automática de dados no portal da transparência.",
+  },
 ];
 
 export const Support = () => {
@@ -49,42 +95,46 @@ export const Support = () => {
           </p>
         </motion.div>
 
-        {/* Downloads */}
+        {/* Central de Ferramentas */}
         <div className="mb-20">
           <div className="flex items-center gap-3 mb-8">
-            <Monitor className="text-primary" />
-            <h3 className="text-2xl font-bold text-foreground">Acesso Remoto</h3>
+            <Wrench className="text-primary" />
+            <h3 className="text-2xl font-bold text-foreground">Central de Ferramentas</h3>
           </div>
-          <div className="grid md:grid-cols-2 gap-6">
-            {downloads.map((d, i) => (
-              <motion.a
-                key={d.name}
-                href={d.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="group flex items-center gap-5 bg-card border border-border rounded-2xl p-6 hover:shadow-[var(--shadow-card-hover)] hover:-translate-y-1 transition-all duration-300"
-              >
-                <div
-                  className={`w-16 h-16 rounded-xl bg-gradient-to-br ${d.color} flex items-center justify-center text-white shadow-lg`}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {tools.map((d, i) => {
+              const Icon = d.icon;
+              return (
+                <motion.div
+                  key={d.name}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: i * 0.08 }}
+                  className="group flex flex-col bg-card border border-border rounded-2xl p-6 hover:shadow-[var(--shadow-card-hover)] hover:-translate-y-1 transition-all duration-300"
                 >
-                  <Download size={28} />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-xl font-bold text-foreground mb-1">
-                    Baixar {d.name}
+                  <div
+                    className={`w-14 h-14 rounded-xl bg-gradient-to-br ${d.color} flex items-center justify-center text-white shadow-lg mb-4`}
+                  >
+                    <Icon size={26} />
+                  </div>
+                  <h4 className="text-lg font-bold text-foreground mb-1">
+                    {d.name}
                   </h4>
-                  <p className="text-sm text-muted-foreground">{d.description}</p>
-                </div>
-                <Download
-                  className="text-muted-foreground group-hover:text-primary transition-colors"
-                  size={22}
-                />
-              </motion.a>
-            ))}
+                  <p className="text-sm text-muted-foreground flex-1 mb-5">
+                    {d.description}
+                  </p>
+                  <a
+                    href={d.href}
+                    target={d.href.startsWith("http") ? "_blank" : undefined}
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 btn-gradient px-4 py-2.5 rounded-lg text-sm"
+                  >
+                    <Download size={16} /> Download
+                  </a>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
 
@@ -117,9 +167,12 @@ export const Support = () => {
                   <span className="inline-block text-xs font-semibold text-primary uppercase tracking-wider mb-2">
                     {t.topic}
                   </span>
-                  <h4 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+                  <h4 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors mb-2">
                     {t.title}
                   </h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {t.description}
+                  </p>
                 </div>
               </motion.div>
             ))}

@@ -8,13 +8,21 @@ export const Footer = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
           {/* Brand */}
           <div className="lg:col-span-1">
-            <div className="bg-white/95 rounded-xl p-3 inline-block mb-4">
+            <div className="bg-white/95 rounded-xl px-5 py-5 inline-block mb-4">
               <img src={logo} alt="Martinez & Carvalho" className="h-12 w-auto" />
             </div>
             <p className="text-white/70 text-sm leading-relaxed">
               Especialistas em implantação e suporte de Sistemas Fiorilli para a gestão
               pública municipal.
             </p>
+            <div className="mt-5 inline-block px-3 py-2 rounded-lg border border-white/10 bg-white/5">
+              <span className="block text-[10px] uppercase tracking-wider text-white/50 mb-0.5">
+                CNPJ
+              </span>
+              <span className="text-sm font-medium text-white/90">
+                14.908.157/0001-24
+              </span>
+            </div>
             <div className="flex gap-3 mt-5">
               {[Facebook, Instagram, Linkedin].map((Icon, i) => (
                 <a

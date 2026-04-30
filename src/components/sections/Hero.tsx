@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, ChevronDown } from "lucide-react";
-import heroImage from "@/assets/hero-office.jpg";
+import heroImage from "@/assets/hero-smartcity.jpg";
 
 const slides = [
   "Especialistas em Gestão Pública Municipal.",
@@ -24,11 +24,12 @@ export const Hero = () => {
     >
       <img
         src={heroImage}
-        alt="Escritório de tecnologia Martinez & Carvalho"
+        alt="Smart city — tecnologia para gestão pública"
         className="absolute inset-0 w-full h-full object-cover"
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-brand-dark/85 via-brand-dark/75 to-brand-dark/90" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,hsl(var(--brand-dark)/0.6)_100%)]" />
+      {/* Light smoke mask — keeps image bright while ensuring text legibility */}
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-900/55 via-slate-900/35 to-slate-900/65" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,hsl(220_40%_10%/0.45)_100%)]" />
 
       <div className="relative z-10 container mx-auto px-4 text-center text-white">
         <motion.div
