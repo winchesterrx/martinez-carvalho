@@ -44,6 +44,7 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 app.get('/api/auth/verify', (req, res) => {
+app.get('/auth/verify', (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (token && token.startsWith('martinez-jwt-')) {
     res.json({ valid: true });
@@ -55,7 +56,7 @@ app.get('/api/auth/verify', (req, res) => {
 // ==========================================
 // SISTEMAS
 // ==========================================
-app.get('/api/sistemas', async (req, res) => {
+app.get('/sistemas', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM sistemas_site WHERE ativo = 1 ORDER BY ordem ASC, id ASC');
     const parsed = rows.map(r => ({
@@ -70,7 +71,7 @@ app.get('/api/sistemas', async (req, res) => {
   }
 });
 
-app.get('/api/sistemas/all', async (req, res) => {
+app.get('/sistemas/all', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM sistemas_site ORDER BY ordem ASC, id ASC');
     const parsed = rows.map(r => ({
@@ -85,7 +86,7 @@ app.get('/api/sistemas/all', async (req, res) => {
   }
 });
 
-app.get('/api/sistemas/:slug', async (req, res) => {
+app.get('/sistemas/:slug', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM sistemas_site WHERE slug = ? AND ativo = 1', [req.params.slug]);
     if (rows.length === 0) return res.status(404).json({ error: 'Sistema não encontrado' });
@@ -101,7 +102,7 @@ app.get('/api/sistemas/:slug', async (req, res) => {
   }
 });
 
-app.post('/api/sistemas', async (req, res) => {
+app.post('/sistemas', async (req, res) => {
   try {
     const { slug, icone, nome, titulo, descricao, tagline, features, modulos, beneficios, ordem, ativo } = req.body;
     const [result] = await db.query(
@@ -114,7 +115,7 @@ app.post('/api/sistemas', async (req, res) => {
   }
 });
 
-app.put('/api/sistemas/:id', async (req, res) => {
+app.put('/sistemas/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { slug, icone, nome, titulo, descricao, tagline, features, modulos, beneficios, ordem, ativo } = req.body;
@@ -128,7 +129,7 @@ app.put('/api/sistemas/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/sistemas/:id', async (req, res) => {
+app.delete('/sistemas/:id', async (req, res) => {
   try {
     await db.query('DELETE FROM sistemas_site WHERE id = ?', [req.params.id]);
     res.json({ success: true });
@@ -140,7 +141,7 @@ app.delete('/api/sistemas/:id', async (req, res) => {
 // ==========================================
 // VÍDEOS / TUTORIAIS
 // ==========================================
-app.get('/api/videos', async (req, res) => {
+app.get('/videos', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM videos_site WHERE ativo = 1 ORDER BY ordem ASC, id ASC');
     res.json(rows);
@@ -149,7 +150,7 @@ app.get('/api/videos', async (req, res) => {
   }
 });
 
-app.get('/api/videos/all', async (req, res) => {
+app.get('/videos/all', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM videos_site ORDER BY ordem ASC, id ASC');
     res.json(rows);
@@ -158,7 +159,7 @@ app.get('/api/videos/all', async (req, res) => {
   }
 });
 
-app.post('/api/videos', async (req, res) => {
+app.post('/videos', async (req, res) => {
   try {
     const { titulo, descricao, url_video, duracao, topico, thumbnail_url, ordem } = req.body;
     const [result] = await db.query(
@@ -171,7 +172,7 @@ app.post('/api/videos', async (req, res) => {
   }
 });
 
-app.put('/api/videos/:id', async (req, res) => {
+app.put('/videos/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { titulo, descricao, url_video, duracao, topico, thumbnail_url, ordem, ativo } = req.body;
@@ -185,7 +186,7 @@ app.put('/api/videos/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/videos/:id', async (req, res) => {
+app.delete('/videos/:id', async (req, res) => {
   try {
     await db.query('DELETE FROM videos_site WHERE id = ?', [req.params.id]);
     res.json({ success: true });
@@ -197,7 +198,7 @@ app.delete('/api/videos/:id', async (req, res) => {
 // ==========================================
 // FERRAMENTAS DE SUPORTE
 // ==========================================
-app.get('/api/ferramentas', async (req, res) => {
+app.get('/ferramentas', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM ferramentas_site WHERE ativo = 1 ORDER BY ordem ASC, id ASC');
     res.json(rows);
@@ -206,7 +207,7 @@ app.get('/api/ferramentas', async (req, res) => {
   }
 });
 
-app.get('/api/ferramentas/all', async (req, res) => {
+app.get('/ferramentas/all', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM ferramentas_site ORDER BY ordem ASC, id ASC');
     res.json(rows);
@@ -215,7 +216,7 @@ app.get('/api/ferramentas/all', async (req, res) => {
   }
 });
 
-app.post('/api/ferramentas', async (req, res) => {
+app.post('/ferramentas', async (req, res) => {
   try {
     const { nome, descricao, url_download, icone, cor, ordem } = req.body;
     const [result] = await db.query(
@@ -228,7 +229,7 @@ app.post('/api/ferramentas', async (req, res) => {
   }
 });
 
-app.put('/api/ferramentas/:id', async (req, res) => {
+app.put('/ferramentas/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { nome, descricao, url_download, icone, cor, ordem, ativo } = req.body;
@@ -242,7 +243,7 @@ app.put('/api/ferramentas/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/ferramentas/:id', async (req, res) => {
+app.delete('/ferramentas/:id', async (req, res) => {
   try {
     await db.query('DELETE FROM ferramentas_site WHERE id = ?', [req.params.id]);
     res.json({ success: true });
@@ -254,7 +255,7 @@ app.delete('/api/ferramentas/:id', async (req, res) => {
 // ==========================================
 // SOBRE / QUEM SOMOS
 // ==========================================
-app.get('/api/sobre', async (req, res) => {
+app.get('/sobre', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM sobre_site WHERE id = 1');
     res.json(rows[0] || {});
@@ -263,7 +264,7 @@ app.get('/api/sobre', async (req, res) => {
   }
 });
 
-app.put('/api/sobre', async (req, res) => {
+app.put('/sobre', async (req, res) => {
   try {
     const {
       titulo, subtitulo, texto_principal, texto_secundario,
@@ -306,7 +307,7 @@ app.put('/api/sobre', async (req, res) => {
 // ==========================================
 // CONTATO
 // ==========================================
-app.get('/api/contato', async (req, res) => {
+app.get('/contato', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM contato_site WHERE id = 1');
     res.json(rows[0] || {});
@@ -315,7 +316,7 @@ app.get('/api/contato', async (req, res) => {
   }
 });
 
-app.put('/api/contato', async (req, res) => {
+app.put('/contato', async (req, res) => {
   try {
     const {
       telefone, email, endereco_rua, endereco_bairro, endereco_cidade, endereco_cep,
@@ -345,7 +346,7 @@ app.put('/api/contato', async (req, res) => {
 // ==========================================
 // CONFIGURAÇÕES (key/value)
 // ==========================================
-app.get('/api/configuracoes', async (req, res) => {
+app.get('/configuracoes', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT chave, valor FROM configuracoes_site');
     const configs = rows.reduce((acc, row) => {
@@ -358,7 +359,7 @@ app.get('/api/configuracoes', async (req, res) => {
   }
 });
 
-app.put('/api/configuracoes/:chave', async (req, res) => {
+app.put('/configuracoes/:chave', async (req, res) => {
   try {
     const { chave } = req.params;
     const { valor } = req.body;
@@ -375,7 +376,7 @@ app.put('/api/configuracoes/:chave', async (req, res) => {
 // ==========================================
 // HERO SLIDES
 // ==========================================
-app.get('/api/hero', async (req, res) => {
+app.get('/hero', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM hero_site WHERE ativo = 1 ORDER BY ordem ASC, id ASC');
     res.json(rows);
@@ -384,7 +385,7 @@ app.get('/api/hero', async (req, res) => {
   }
 });
 
-app.get('/api/hero/all', async (req, res) => {
+app.get('/hero/all', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM hero_site ORDER BY ordem ASC, id ASC');
     res.json(rows);
@@ -393,7 +394,7 @@ app.get('/api/hero/all', async (req, res) => {
   }
 });
 
-app.post('/api/hero', async (req, res) => {
+app.post('/hero', async (req, res) => {
   try {
     const { texto, ordem, ativo } = req.body;
     const [result] = await db.query(
@@ -406,7 +407,7 @@ app.post('/api/hero', async (req, res) => {
   }
 });
 
-app.put('/api/hero/:id', async (req, res) => {
+app.put('/hero/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { texto, ordem, ativo } = req.body;
@@ -420,7 +421,7 @@ app.put('/api/hero/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/hero/:id', async (req, res) => {
+app.delete('/hero/:id', async (req, res) => {
   try {
     await db.query('DELETE FROM hero_site WHERE id = ?', [req.params.id]);
     res.json({ success: true });
@@ -432,7 +433,7 @@ app.delete('/api/hero/:id', async (req, res) => {
 // ==========================================
 // PARCERIA
 // ==========================================
-app.get('/api/parceria', async (req, res) => {
+app.get('/parceria', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM parceria_site WHERE id = 1');
     res.json(rows[0] || {});
@@ -441,7 +442,7 @@ app.get('/api/parceria', async (req, res) => {
   }
 });
 
-app.put('/api/parceria', async (req, res) => {
+app.put('/parceria', async (req, res) => {
   try {
     const { titulo, subtitulo, descricao, badge_texto, logo_url } = req.body;
     await db.query(
@@ -559,7 +560,7 @@ Diretrizes OBRIGATÓRIAS:
 - Use respostas curtas e bem formatadas (listas, negrito).
 - Se não souber algo específico, diga honestamente e direcione para o telefone/e-mail oficial.`;
 
-app.post('/api/chat', async (req, res) => {
+app.post('/chat', async (req, res) => {
   try {
     const { messages } = req.body;
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
