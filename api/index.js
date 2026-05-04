@@ -247,18 +247,38 @@ app.post('/api/chat', async (req, res) => {
     });
 
     res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
+    let buffer = '';
+
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      const chunk = decoder.decode(value);
-      chunk.split('\n').filter(l => l.startsWith('data: ')).forEach(l => {
+      
+      buffer += decoder.decode(value, { stream: true });
+      let lines = buffer.split('\n');
+      buffer = lines.pop() || ''; // Mantém a última linha incompleta no buffer
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith('data: ')) continue;
+        
+        const jsonStr = trimmed.slice(6).trim();
+        if (jsonStr === '[DONE]') break;
+
         try {
-          const text = JSON.parse(l.slice(6)).candidates?.[0]?.content?.parts?.[0]?.text;
-          if (text) res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n\n`);
-        } catch {}
-      });
+          const data = JSON.parse(jsonStr);
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text) {
+            res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n\n`);
+          }
+        } catch (e) {
+          // Ignora erro de parse se o JSON estiver incompleto
+        }
+      }
     }
     res.write('data: [DONE]\n\n');
     res.end();
