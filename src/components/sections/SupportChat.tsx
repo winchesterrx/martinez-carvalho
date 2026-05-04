@@ -12,7 +12,7 @@ const WELCOME: Msg = {
     "Olá! 👋 Eu sou a **Cleusa**, assistente virtual da Martinez & Carvalho.\n\nEstou aqui para te ajudar com dúvidas sobre os sistemas Fiorilli (SCPI, SIP, SIS, SIA, e-SUS, Transparência e outros).\n\nPara que eu te oriente da melhor forma, me conte:\n\n- **Qual sistema** você está utilizando?\n- **Qual a sua dúvida ou erro** (descreva o que estava fazendo)?\n\nAssim consigo te direcionar com agilidade. 😊",
 };
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-cleusa`;
+const CHAT_URL = import.meta.env.PROD ? '/api/chat' : 'http://localhost:3001/api/chat';
 
 export const SupportChat = () => {
   const [open, setOpen] = useState(false);
@@ -58,7 +58,6 @@ export const SupportChat = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({
           messages: next.filter((m) => m !== WELCOME).map((m) => ({

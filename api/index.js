@@ -460,6 +460,269 @@ app.put('/api/parceria', async (req, res) => {
 });
 
 // ==========================================
+// CONHECIMENTO (BASE DA IA)
+// ==========================================
+app.get('/api/conhecimento', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM conhecimento_site WHERE ativo = 1 ORDER BY ordem ASC, id ASC');
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/conhecimento/all', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM conhecimento_site ORDER BY ordem ASC, id DESC');
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/conhecimento', async (req, res) => {
+  try {
+    const { sistema, categoria, titulo, conteudo, tags, ordem } = req.body;
+    const [result] = await db.query(
+      'INSERT INTO conhecimento_site (sistema, categoria, titulo, conteudo, tags, ordem) VALUES (?, ?, ?, ?, ?, ?)',
+      [sistema || null, categoria || 'geral', titulo, conteudo, tags || null, ordem || 0]
+    );
+    res.json({ id: result.insertId });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/conhecimento/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { sistema, categoria, titulo, conteudo, tags, ordem, ativo } = req.body;
+    await db.query(
+      'UPDATE conhecimento_site SET sistema = ?, categoria = ?, titulo = ?, conteudo = ?, tags = ?, ordem = ?, ativo = ? WHERE id = ?',
+      [sistema || null, categoria, titulo, conteudo, tags || null, ordem || 0, ativo !== undefined ? ativo : 1, id]
+    );
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/conhecimento/:id', async (req, res) => {
+  try {
+    await db.query('DELETE FROM conhecimento_site WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ==========================================
+// CHAT CLEUSA (IA com Gemini + RAG)
+// ==========================================
+async function buildKnowledgeContext(userMessage) {
+  let context = '';
+  try {
+    // 1. Buscar sistemas
+    const [sistemas] = await db.query('SELECT nome, titulo, descricao, tagline, modulos, beneficios FROM sistemas_site WHERE ativo = 1');
+    if (sistemas.length) {
+      context += '\n\n=== SISTEMAS FIORILLI ATENDIDOS ===\n';
+      sistemas.forEach(s => {
+        context += `\n**${s.nome} — ${s.titulo}**: ${s.descricao}\n${s.tagline || ''}\nMódulos: ${s.modulos || 'N/A'}\nBenefícios: ${s.beneficios || 'N/A'}\n`;
+      });
+    }
+
+    // 2. Buscar vídeos/tutoriais
+    const [videos] = await db.query('SELECT titulo, descricao, url_video, topico, duracao FROM videos_site WHERE ativo = 1');
+    if (videos.length) {
+      context += '\n\n=== VÍDEOS E TUTORIAIS DISPONÍVEIS ===\n';
+      context += 'Quando o usuário perguntar como fazer algo, indique o vídeo relevante com o link.\n';
+      videos.forEach(v => {
+        context += `- "${v.titulo}" (${v.topico}, ${v.duracao || '?'}) ${v.url_video ? '→ ' + v.url_video : ''}: ${v.descricao || ''}\n`;
+      });
+    }
+
+    // 3. Buscar ferramentas
+    const [ferramentas] = await db.query('SELECT nome, descricao, url_download FROM ferramentas_site WHERE ativo = 1');
+    if (ferramentas.length) {
+      context += '\n\n=== FERRAMENTAS DE SUPORTE ===\n';
+      ferramentas.forEach(f => {
+        context += `- ${f.nome}: ${f.descricao} → Download: ${f.url_download}\n`;
+      });
+    }
+
+    // 4. Buscar contato
+    const [contato] = await db.query('SELECT * FROM contato_site WHERE id = 1');
+    if (contato.length) {
+      const c = contato[0];
+      context += '\n\n=== DADOS DE CONTATO OFICIAIS ===\n';
+      context += `Telefone: ${c.telefone || 'N/A'}\nE-mail: ${c.email || 'N/A'}\nWhatsApp: ${c.whatsapp || 'N/A'}\nEndereço: ${c.endereco_rua || ''}, ${c.endereco_bairro || ''}, ${c.endereco_cidade || ''} - CEP ${c.endereco_cep || ''}\nCNPJ: ${c.cnpj || 'N/A'}\n`;
+    }
+
+    // 5. RAG: Buscar artigos de conhecimento relevantes (por palavras-chave)
+    const words = userMessage.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+    if (words.length > 0) {
+      const conditions = words.map(() => '(LOWER(titulo) LIKE ? OR LOWER(conteudo) LIKE ? OR LOWER(tags) LIKE ?)');
+      const params = words.flatMap(w => [`%${w}%`, `%${w}%`, `%${w}%`]);
+      const query = `SELECT titulo, conteudo, sistema, categoria FROM conhecimento_site WHERE ativo = 1 AND (${conditions.join(' OR ')}) LIMIT 10`;
+      const [artigos] = await db.query(query, params);
+      if (artigos.length) {
+        context += '\n\n=== CONHECIMENTO TÉCNICO RELEVANTE ===\n';
+        context += 'Use estas informações para responder com precisão:\n';
+        artigos.forEach(a => {
+          context += `\n[${a.categoria?.toUpperCase() || 'INFO'}${a.sistema ? ' - ' + a.sistema : ''}] ${a.titulo}\n${a.conteudo}\n`;
+        });
+      }
+    }
+
+    // 6. Buscar TODOS os artigos se não houver match (para perguntas genéricas)
+    if (!context.includes('CONHECIMENTO TÉCNICO')) {
+      const [allArtigos] = await db.query('SELECT titulo, conteudo, sistema, categoria FROM conhecimento_site WHERE ativo = 1 ORDER BY ordem ASC LIMIT 20');
+      if (allArtigos.length) {
+        context += '\n\n=== BASE DE CONHECIMENTO GERAL ===\n';
+        allArtigos.forEach(a => {
+          context += `\n[${a.categoria?.toUpperCase() || 'INFO'}${a.sistema ? ' - ' + a.sistema : ''}] ${a.titulo}\n${a.conteudo}\n`;
+        });
+      }
+    }
+  } catch (err) {
+    console.error('Erro ao buscar contexto:', err.message);
+  }
+  return context;
+}
+
+const SYSTEM_PROMPT_BASE = `Você é a Cleusa, assistente virtual oficial da Martinez & Carvalho Software LTDA, empresa especializada em implantação e suporte dos sistemas Fiorilli Software para gestão pública municipal.
+
+Diretrizes OBRIGATÓRIAS:
+- Sempre responda em português do Brasil, com tom cordial, claro e profissional.
+- Apresente-se apenas se o usuário cumprimentar; nas demais respostas vá direto ao ponto.
+- Faça perguntas objetivas para entender o sistema, o cenário e o erro/dúvida.
+- Forneça orientações passo a passo quando possível e cite caminhos de menu dos sistemas Fiorilli.
+- Quando tiver um vídeo tutorial relevante na base de conhecimento, SEMPRE indique com o link.
+- Quando o problema exigir intervenção técnica, oriente o usuário a baixar o AnyDesk ou TeamViewer (disponíveis no portal de suporte) e informar o ID para atendimento remoto.
+- NUNCA peça dados pessoais (nome, telefone, CPF, e-mail) com promessa de retornar. A empresa NÃO retorna contato via chat.
+- Para atendimento humano, suporte urgente, orçamento, comercial ou contrato, SEMPRE indique os canais oficiais de contato que estão na base de conhecimento.
+- Nunca invente informações de contrato, prazos ou valores.
+- Use respostas curtas e bem formatadas (listas, negrito).
+- Se não souber algo específico, diga honestamente e direcione para o telefone/e-mail oficial.`;
+
+app.post('/api/chat', async (req, res) => {
+  try {
+    const { messages } = req.body;
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+    if (!GEMINI_API_KEY) {
+      return res.status(500).json({ error: 'GEMINI_API_KEY não configurada no servidor.' });
+    }
+
+    // Build context from database
+    const lastUserMsg = messages?.filter(m => m.role === 'user').pop()?.content || '';
+    const knowledge = await buildKnowledgeContext(lastUserMsg);
+    const fullSystemPrompt = SYSTEM_PROMPT_BASE + knowledge;
+
+    // Call Gemini API (Google AI Studio)
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:streamGenerateContent?alt=sse&key=${GEMINI_API_KEY}`;
+
+    const geminiMessages = [
+      { role: 'user', parts: [{ text: 'system: ' + fullSystemPrompt }] },
+      { role: 'model', parts: [{ text: 'Entendido. Sou a Cleusa, assistente virtual da Martinez & Carvalho. Estou pronta para ajudar com os sistemas Fiorilli.' }] },
+      ...(messages || []).map(m => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: m.content }]
+      }))
+    ];
+
+    const response = await fetch(geminiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: geminiMessages,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 2048,
+          topP: 0.9,
+        },
+        safetySettings: [
+          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error('Gemini API error:', response.status, errText);
+      if (response.status === 429) {
+        return res.status(429).json({ error: 'Muitas mensagens. Aguarde alguns segundos.' });
+      }
+      return res.status(500).json({ error: 'Erro ao conectar com a IA.' });
+    }
+
+    // Stream SSE response back
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    const processChunk = async () => {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          res.write('data: [DONE]\n\n');
+          res.end();
+          return;
+        }
+
+        buffer += decoder.decode(value, { stream: true });
+        let idx;
+        while ((idx = buffer.indexOf('\n')) !== -1) {
+          let line = buffer.slice(0, idx);
+          buffer = buffer.slice(idx + 1);
+          if (line.endsWith('\r')) line = line.slice(0, -1);
+          if (line.trim() === '' || line.startsWith(':')) continue;
+
+          if (line.startsWith('data: ')) {
+            const json = line.slice(6).trim();
+            if (json === '[DONE]') {
+              res.write('data: [DONE]\n\n');
+              res.end();
+              return;
+            }
+            try {
+              const parsed = JSON.parse(json);
+              const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (text) {
+                // Convert to OpenAI-compatible SSE format for frontend compatibility
+                const sseData = JSON.stringify({
+                  choices: [{ delta: { content: text } }]
+                });
+                res.write(`data: ${sseData}\n\n`);
+              }
+            } catch {
+              // ignore parse errors
+            }
+          }
+        }
+      }
+    };
+
+    processChunk().catch(err => {
+      console.error('Stream error:', err);
+      res.end();
+    });
+
+  } catch (error) {
+    console.error('Chat error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ==========================================
 // HELPER
 // ==========================================
 function safeJsonParse(str, fallback) {
@@ -478,3 +741,4 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.log(`✅ API Martinez & Carvalho rodando na porta ${PORT}`);
   });
 }
+

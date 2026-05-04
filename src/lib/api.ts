@@ -98,6 +98,12 @@ export const createHeroSlide = (data: unknown) => postJSON('/hero', data);
 export const updateHeroSlide = (id: number, data: unknown) => putJSON(`/hero/${id}`, data);
 export const deleteHeroSlide = (id: number) => deleteJSON(`/hero/${id}`);
 
+// Conhecimento (IA)
+export const fetchConhecimentoAll = () => fetchJSON('/conhecimento/all');
+export const createConhecimento = (data: unknown) => postJSON('/conhecimento', data);
+export const updateConhecimento = (id: number, data: unknown) => putJSON(`/conhecimento/${id}`, data);
+export const deleteConhecimento = (id: number) => deleteJSON(`/conhecimento/${id}`);
+
 // Parceria
 export const updateParceria = (data: unknown) => putJSON('/parceria', data);
 

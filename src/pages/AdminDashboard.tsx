@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Monitor, Video, Wrench, FileText, Phone,
-  Image, Handshake, Settings, LogOut, ChevronLeft, Menu
+  Image, Handshake, Settings, LogOut, ChevronLeft, Menu, BrainCircuit
 } from "lucide-react";
 import { verifyAuth } from "@/lib/api";
 import logo from "@/assets/logo-martinez.png";
@@ -14,6 +14,7 @@ import SobreManager from "@/components/admin/SobreManager";
 import ContatoManager from "@/components/admin/ContatoManager";
 import HeroManager from "@/components/admin/HeroManager";
 import ConfiguracoesManager from "@/components/admin/ConfiguracoesManager";
+import ConhecimentoManager from "@/components/admin/ConhecimentoManager";
 
 const tabs = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -23,6 +24,7 @@ const tabs = [
   { id: "sobre", label: "Quem Somos", icon: FileText },
   { id: "contato", label: "Contato", icon: Phone },
   { id: "hero", label: "Hero / Banner", icon: Image },
+  { id: "conhecimento", label: "Base IA", icon: BrainCircuit },
   { id: "configuracoes", label: "Configurações", icon: Settings },
 ];
 
@@ -66,6 +68,7 @@ const AdminDashboard = () => {
       case "sobre": return <SobreManager />;
       case "contato": return <ContatoManager />;
       case "hero": return <HeroManager />;
+      case "conhecimento": return <ConhecimentoManager />;
       case "configuracoes": return <ConfiguracoesManager />;
       default:
         return (
