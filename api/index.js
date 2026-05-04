@@ -229,34 +229,40 @@ app.post('/api/chat', async (req, res) => {
       console.log('Contexto RAG recuperado:', context.length, 'caracteres');
     } catch (e) { console.error('Erro RAG:', e); }
 
-    const key = process.env.GEMINI_API_KEY;
+    const key = (process.env.GEMINI_API_KEY || '').trim();
     if (!key) {
-      console.error('ERRO: GEMINI_API_KEY não encontrada!');
-      return res.status(500).json({ error: 'Key' });
+      console.error('ERRO: GEMINI_API_KEY não configurada ou vazia!');
+      return res.status(500).json({ error: 'Configuração de IA ausente no servidor.' });
     }
 
     const model = 'gemini-1.5-flash';
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${key}`;
 
-    const response = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [
-          { role: 'user', parts: [{ text: `Você é a Cleusa, assistente técnica da Martinez & Carvalho. Use este contexto técnico para responder SEMPRE com links quando disponíveis: ${context}` }] },
-          { role: 'model', parts: [{ text: 'Entendido. Sou a Cleusa e vou ajudar com os sistemas Fiorilli usando links reais do canal Fiorilli Play.' }] },
-          ...(messages || []).map(m => ({
-            role: m.role === 'assistant' ? 'model' : 'user',
-            parts: [{ text: m.content || '' }]
-          }))
-        ]
-      })
-    });
+    let response;
+    try {
+      response = await fetch(geminiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [
+            { role: 'user', parts: [{ text: `Você é a Cleusa, assistente técnica. Contexto: ${context}` }] },
+            { role: 'model', parts: [{ text: 'Entendido. Sou a Cleusa e vou ajudar com os sistemas Fiorilli.' }] },
+            ...(messages || []).map(m => ({
+              role: m.role === 'assistant' ? 'model' : 'user',
+              parts: [{ text: m.content || '' }]
+            }))
+          ]
+        })
+      });
+    } catch (fetchErr) {
+      console.error('Erro ao chamar Google Gemini:', fetchErr);
+      return res.status(500).json({ error: 'Falha na comunicação com o motor de IA.' });
+    }
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error('Erro na API do Gemini:', response.status, errText);
-      throw new Error(`Gemini API: ${response.status}`);
+      console.error('Gemini API Error:', response.status, errText);
+      return res.status(response.status).json({ error: `IA Indisponível (${response.status})` });
     }
 
     res.setHeader('Content-Type', 'text/event-stream');
