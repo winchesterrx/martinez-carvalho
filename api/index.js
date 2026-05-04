@@ -50,6 +50,7 @@ app.post('/api/auth/login', async (req, res) => {
     
     const user = rows[0];
     res.json({
+      success: true,
       token: `martinez-jwt-${Date.now()}`,
       user: { id: user.id, nome: user.nome, usuario: user.usuario, papel: user.papel }
     });
