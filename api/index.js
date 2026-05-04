@@ -252,32 +252,31 @@ app.post('/api/chat', async (req, res) => {
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
-    let buffer = '';
+    let streamBuffer = '';
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
       
-      buffer += decoder.decode(value, { stream: true });
-      let lines = buffer.split('\n');
-      buffer = lines.pop() || ''; // Mantém a última linha incompleta no buffer
+      streamBuffer += decoder.decode(value, { stream: true });
+      let lines = streamBuffer.split('\n');
+      streamBuffer = lines.pop() || '';
 
       for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed || !trimmed.startsWith('data: ')) continue;
-        
-        const jsonStr = trimmed.slice(6).trim();
+        if (!line.trim().startsWith('data: ')) continue;
+        const jsonStr = line.trim().slice(6);
         if (jsonStr === '[DONE]') break;
 
         try {
           const data = JSON.parse(jsonStr);
           const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
           if (text) {
-            res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n\n`);
+            const output = JSON.stringify({
+              choices: [{ delta: { content: text } }]
+            });
+            res.write(`data: ${output}\n\n`);
           }
-        } catch (e) {
-          // Ignora erro de parse se o JSON estiver incompleto
-        }
+        } catch (e) {}
       }
     }
     res.write('data: [DONE]\n\n');
