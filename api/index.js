@@ -96,9 +96,56 @@ app.delete('/api/sistemas/:id', async (req, res) => {
 });
 
 // ==========================================
+// CONHECIMENTO (IA) - EXPLÍCITO PARA EVITAR 404
+// ==========================================
+app.get('/api/conhecimento', async (req, res) => {
+  try {
+    const [rows] = await getPool().query('SELECT * FROM conhecimento_site WHERE ativo = 1 ORDER BY ordem ASC, id DESC');
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/conhecimento/all', async (req, res) => {
+  try {
+    const [rows] = await getPool().query('SELECT * FROM conhecimento_site ORDER BY ordem ASC, id DESC');
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/conhecimento', async (req, res) => {
+  try {
+    const { sistema, categoria, titulo, conteudo, tags, ordem, ativo } = req.body;
+    const [result] = await getPool().query(
+      'INSERT INTO conhecimento_site (sistema, categoria, titulo, conteudo, tags, ordem, ativo) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [sistema || null, categoria || 'FAQ', titulo, conteudo, tags || null, ordem || 0, ativo !== undefined ? ativo : 1]
+    );
+    res.json({ success: true, id: result.insertId });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/conhecimento/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { sistema, categoria, titulo, conteudo, tags, ordem, ativo } = req.body;
+    await getPool().query(
+      'UPDATE conhecimento_site SET sistema=?, categoria=?, titulo=?, conteudo=?, tags=?, ordem=?, ativo=? WHERE id=?',
+      [sistema || null, categoria, titulo, conteudo, tags || null, ordem || 0, ativo !== undefined ? ativo : 1, id]
+    );
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/conhecimento/:id', async (req, res) => {
+  try {
+    await getPool().query('DELETE FROM conhecimento_site WHERE id=?', [req.params.id]);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ==========================================
 // ROTAS GENÉRICAS (Videos, Ferramentas, Hero, etc)
 // ==========================================
-const tables = ['videos', 'ferramentas', 'hero', 'conhecimento', 'sobre', 'contato', 'parceria'];
+const tables = ['videos', 'ferramentas', 'hero', 'sobre', 'contato', 'parceria', 'configuracoes'];
 
 tables.forEach(t => {
   // Rota Pública
@@ -155,6 +202,32 @@ tables.forEach(t => {
 app.post('/api/chat', async (req, res) => {
   try {
     const { messages } = req.body;
+    
+    // RAG Inteligente: Buscar na base de conhecimento por palavras-chave
+    let context = '';
+    try {
+      const lastMsg = (messages[messages.length - 1].content || '').toLowerCase();
+      const words = lastMsg.split(/\s+/).filter(w => w.length > 3);
+      
+      if (words.length > 0) {
+        const conditions = words.map(() => '(LOWER(titulo) LIKE ? OR LOWER(conteudo) LIKE ? OR LOWER(tags) LIKE ?)');
+        const params = words.flatMap(w => [`%${w}%`, `%${w}%`, `%${w}%`]);
+        const [artigos] = await getPool().query(`SELECT titulo, conteudo, categoria FROM conhecimento_site WHERE ativo = 1 AND (${conditions.join(' OR ')}) LIMIT 10`, params);
+        
+        if (artigos.length > 0) {
+          context = '\n=== CONHECIMENTO TÉCNICO ENCONTRADO ===\n';
+          artigos.forEach(a => context += `\n[${a.categoria}] ${a.titulo}: ${a.conteudo}\n`);
+        }
+      }
+      
+      // Se não achar nada específico, pega os mais importantes
+      if (!context) {
+        const [top] = await getPool().query('SELECT titulo, conteudo FROM conhecimento_site WHERE ativo = 1 ORDER BY ordem ASC LIMIT 5');
+        context = '\n=== CONHECIMENTO GERAL ===\n';
+        top.forEach(a => context += `\n- ${a.titulo}: ${a.conteudo}`);
+      }
+    } catch (e) { console.error('Erro RAG:', e); }
+
     const key = process.env.GEMINI_API_KEY;
     if (!key) return res.status(500).json({ error: 'Key' });
 
@@ -162,10 +235,14 @@ app.post('/api/chat', async (req, res) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: (messages || []).map(m => ({
-          role: m.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: m.content || '' }]
-        }))
+        contents: [
+          { role: 'user', parts: [{ text: `Você é a Cleusa, assistente técnica da Martinez & Carvalho. Use este contexto para ajudar o usuário: ${context}` }] },
+          { role: 'model', parts: [{ text: 'Entendido. Vou usar a base de conhecimento técnica para responder com precisão.' }] },
+          ...(messages || []).map(m => ({
+            role: m.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: m.content || '' }]
+          }))
+        ]
       })
     });
 
