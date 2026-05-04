@@ -32,11 +32,16 @@ export const Software = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {systems.map((s: Record<string, unknown>, i: number) => {
             const Icon = s.icon as React.ComponentType<{ size?: number }>;
+            const desc = ((s.descricao || s.description) as string) || "";
+            const MAX_CHARS = 120;
+            const isLong = desc.length > MAX_CHARS;
+            const truncated = isLong ? desc.slice(0, MAX_CHARS).trimEnd() + "…" : desc;
+
             return (
               <motion.div key={s.slug as string} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: i * 0.08 }}>
-                <Link to={`/sistemas/${s.slug}`} className="group relative block h-full bg-card border border-border rounded-2xl p-8 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)] hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+                <Link to={`/sistemas/${s.slug}`} className="group relative flex flex-col h-full min-h-[280px] bg-card border border-border rounded-2xl p-8 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)] hover:-translate-y-1 transition-all duration-300 overflow-hidden">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/15 transition-colors" />
-                  <div className="relative">
+                  <div className="relative flex flex-col flex-1">
                     <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-primary-deep text-primary-foreground shadow-[var(--shadow-glow)] mb-5">
                       <Icon size={26} />
                     </div>
@@ -44,10 +49,18 @@ export const Software = () => {
                       <h3 className="text-2xl font-bold text-foreground">{s.nome as string}</h3>
                       <span className="text-sm text-muted-foreground">{s.titulo as string}</span>
                     </div>
-                    <p className="text-muted-foreground leading-relaxed">{(s.descricao || s.description) as string}</p>
-                    <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                      Saiba mais <ArrowUpRight size={16} />
-                    </span>
+                    <p className="text-muted-foreground leading-relaxed flex-1">{truncated}</p>
+                    <div className="mt-4">
+                      {isLong ? (
+                        <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary">
+                          Ler mais <ArrowUpRight size={16} />
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-sm font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                          Saiba mais <ArrowUpRight size={16} />
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </Link>
               </motion.div>
