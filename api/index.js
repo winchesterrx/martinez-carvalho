@@ -235,7 +235,7 @@ app.post('/api/chat', async (req, res) => {
       return res.status(500).json({ error: 'Configuração de IA ausente no servidor.' });
     }
 
-    const model = 'gemini-1.5-flash';
+    const model = 'gemini-flash-latest';
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${key}`;
 
     let response;
@@ -245,8 +245,22 @@ app.post('/api/chat', async (req, res) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [
-            { role: 'user', parts: [{ text: `Você é a Cleusa, assistente técnica. Contexto: ${context}` }] },
-            { role: 'model', parts: [{ text: 'Entendido. Sou a Cleusa e vou ajudar com os sistemas Fiorilli.' }] },
+            { 
+              role: 'user', 
+              parts: [{ 
+                text: `Você é a Cleusa, a assistente virtual oficial da Martinez & Carvalho.
+                Seu objetivo é ajudar usuários com dúvidas técnicas sobre os sistemas Fiorilli (SCPI, SIP, SIS, etc).
+                
+                USE O CONHECIMENTO ABAIXO PARA RESPONDER:
+                ${context}
+                
+                INSTRUÇÕES:
+                1. Seja educada, profissional e direta.
+                2. Se a resposta estiver no "CONHECIMENTO TÉCNICO", use-a como prioridade absoluta.
+                3. Se não souber algo, peça para o usuário entrar em contato com o suporte técnico da Martinez & Carvalho.` 
+              }] 
+            },
+            { role: 'model', parts: [{ text: 'Entendido. Sou a Cleusa e estou pronta para ajudar com base no conhecimento técnico dos sistemas Fiorilli.' }] },
             ...(messages || []).map(m => ({
               role: m.role === 'assistant' ? 'model' : 'user',
               parts: [{ text: m.content || '' }]
